@@ -1,111 +1,160 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* ── Google Fonts ──────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* ── Tailwind base / components / utilities ────────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+/* ── Base resets ───────────────────────────────────────────── */
+@layer base {
+  html {
+    color-scheme: dark;
+    font-size: 14px;
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  body {
+    @apply font-sans bg-bg-base text-slate-200 antialiased min-h-screen overflow-x-hidden;
+    line-height: 1.5;
   }
+
+  /* Subtle cyan grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 212, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 255, 0.015) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar        { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.10); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+/* ── Reusable component classes ────────────────────────────── */
+@layer components {
+  /* Glassmorphism card */
+  .glass {
+    @apply bg-white/[.035] border border-white/[.07] rounded-lg backdrop-blur-xl
+           transition-all duration-[180ms] ease-[cubic-bezier(0.4,0,0.2,1)];
+  }
+  .glass:hover {
+    @apply bg-white/[.06] border-white/[.14];
+  }
+
+  /* Section heading rule */
+  .section-title {
+    @apply text-[0.72rem] font-semibold tracking-[0.1em] uppercase text-slate-500 mb-3.5
+           flex items-center gap-2;
+  }
+  .section-title::after {
+    content: '';
+    @apply flex-1 h-px bg-white/[.07];
+  }
+
+  /* Shimmer skeleton */
+  .skeleton {
+    border-radius: 6px;
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 25%,
+      rgba(255,255,255,0.09) 50%,
+      rgba(255,255,255,0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  /* Status pill */
+  .status-pill {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.72rem] font-medium border;
+  }
+  .status-pill--connected    { @apply border-green-500/30 bg-green-500/[.08] text-green-400; }
+  .status-pill--connecting   { @apply border-amber-500/30 bg-amber-500/[.08] text-amber-400; }
+  .status-pill--disconnected,
+  .status-pill--error        { @apply border-rose-500/30  bg-rose-500/[.08]  text-rose-400; }
+
+  /* Badge */
+  .badge {
+    @apply text-[0.65rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-full;
+  }
+  .badge--idle    { @apply bg-white/[.06] text-slate-400; }
+  .badge--running { @apply bg-cpu/[.12] text-cpu; }
+  .badge--success { @apply bg-green-500/[.10] text-green-400; }
+  .badge--error   { @apply bg-rose-500/[.10] text-rose-400; }
+
+  /* Log badge */
+  .log-badge {
+    @apply inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-0.5 rounded-full whitespace-nowrap;
+  }
+  .log-badge--success { @apply bg-green-500/[.10] text-green-400; }
+  .log-badge--error   { @apply bg-rose-500/[.10]  text-rose-400; }
 }
 
-body {
-  margin: 0;
+/* ── SVG text fills (can't be done with utilities) ─────────── */
+.gauge-value {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 18px;
+  font-weight: 600;
+  fill: #f8fafc;
+  dominant-baseline: middle;
 }
-
-h1,
-h2 {
-  font-family: var(--heading);
+.gauge-unit {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 9px;
   font-weight: 500;
-  color: var(--text-h);
+  fill: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  dominant-baseline: middle;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+/* Gauge stroke gradient colours */
+.gauge--cpu  .grad-start { stop-color: #00d4ff; }
+.gauge--cpu  .grad-end   { stop-color: #0080ff; }
+.gauge--ram  .grad-start { stop-color: #c084fc; }
+.gauge--ram  .grad-end   { stop-color: #7c3aed; }
+.gauge--disk .grad-start { stop-color: #34d399; }
+.gauge--disk .grad-end   { stop-color: #059669; }
+.gauge--net  .grad-start { stop-color: #fbbf24; }
+.gauge--net  .grad-end   { stop-color: #d97706; }
+
+/* Gauge label accent colours */
+.gauge--cpu  .gauge-label { color: #00d4ff; }
+.gauge--ram  .gauge-label { color: #a855f7; }
+.gauge--disk .gauge-label { color: #10b981; }
+.gauge--net  .gauge-label { color: #f59e0b; }
+
+/* Gauge glow blobs */
+.gauge--cpu  .gauge-glow { background: #00d4ff; }
+.gauge--ram  .gauge-glow { background: #a855f7; }
+.gauge--disk .gauge-glow { background: #10b981; }
+.gauge--net  .gauge-glow { background: #f59e0b; }
+
+/* SVG ring fill transition */
+.gauge-fill {
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1);
+  animation: gauge-fill 0.9s cubic-bezier(0.4,0,0.2,1) both;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* Core bar fill gradient */
+.core-bar-fill {
+  background: linear-gradient(to top, #00d4ff, rgba(0,212,255,0.3));
+  border-radius: 3px 3px 0 0;
+  transition: height 0.6s cubic-bezier(0.4,0,0.2,1);
+  width: 100%;
+  min-height: 2px;
 }
