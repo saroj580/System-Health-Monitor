@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import APP_NAME, APP_VERSION, HOST, PORT
 from app.core.database import init_db
-from app.views.routes import router
+from app.views.routes import router, websocket_stats
 
 # Logging
 logging.basicConfig(
@@ -63,6 +63,10 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(router)
+
+    # WebSocket must be registered on the app directly (not via APIRouter)
+    app.add_api_websocket_route("/ws/stats", websocket_stats)
+
     return app
 
 
