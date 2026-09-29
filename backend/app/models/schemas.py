@@ -88,6 +88,7 @@ class TaskLogEntry(BaseModel):
     status: str
     message: Optional[str]
     duration_ms: Optional[int]
+    user_email: Optional[str] = None
     created_at: str
 
 
@@ -99,3 +100,28 @@ class AppInfo(BaseModel):
     version: str
     host: str
     port: int
+
+
+# License Verification & Trial Mode
+
+class LicenseActivateRequest(BaseModel):
+    """Payload for POST /api/license/activate (Model 1: RSA License Key)."""
+    token: str = Field(..., description="The JWT license key provided by the developer.")
+
+
+class TrialActivateRequest(BaseModel):
+    """Payload for POST /api/license/trial (Model 2: In-app 7-day free trial)."""
+    name: str = Field(..., min_length=1, max_length=100, description="User's display name")
+    email: str = Field(..., min_length=3, max_length=100, description="User's email address")
+
+
+class LicenseStatusResponse(BaseModel):
+    """Returned by GET /api/license/status, POST /api/license/activate, and POST /api/license/trial."""
+    is_valid: bool
+    message: str
+    is_trial: bool = False
+    trial_available: bool = True
+    days_left: Optional[int] = None
+    licensee_name: Optional[str] = None
+    licensee_email: Optional[str] = None
+    expires_at: Optional[str] = None
