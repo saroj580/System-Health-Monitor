@@ -12,12 +12,12 @@ from app.models.schemas import TaskResult, TaskLogEntry
 
 # task_log table 
 
-def insert_task_log(conn: sqlite3.Connection, result: TaskResult) -> int:
-    """Insert a task execution record. Returns the new row id."""
+def insert_task_log(conn: sqlite3.Connection, result: TaskResult, user_email: str = "") -> int:
+    """Insert a task execution record tied to the active licensed user. Returns the new row id."""
     cur = conn.execute(
         """
-        INSERT INTO task_log (task_id, task_label, status, message, duration_ms)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO task_log (task_id, task_label, status, message, duration_ms, user_email)
+        VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
             result.task_id,
@@ -25,22 +25,42 @@ def insert_task_log(conn: sqlite3.Connection, result: TaskResult) -> int:
             result.status,
             result.message,
             result.duration_ms,
+            user_email,
         ),
     )
     return cur.lastrowid  # type: ignore[return-value]
 
 
-def fetch_task_logs(conn: sqlite3.Connection, limit: int = 100) -> list[TaskLogEntry]:
-    """Return the most recent `limit` task log entries, newest first."""
-    rows = conn.execute(
-        """
-        SELECT id, task_id, task_label, status, message, duration_ms, created_at
-        FROM task_log
-        ORDER BY id DESC
-        LIMIT ?
-        """,
-        (limit,),
-    ).fetchall()
+def fetch_task_logs(
+    conn: sqlite3.Connection,
+    user_email: str | None = None,
+    limit: int = 100,
+) -> list[TaskLogEntry]:
+    """
+    Return the most recent `limit` task log entries for the active licensed user, newest first.
+    If user_email is provided, strictly filters by that user's identity.
+    """
+    if user_email:
+        rows = conn.execute(
+            """
+            SELECT id, task_id, task_label, status, message, duration_ms, user_email, created_at
+            FROM task_log
+            WHERE user_email = ?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (user_email, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT id, task_id, task_label, status, message, duration_ms, user_email, created_at
+            FROM task_log
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
 
     return [TaskLogEntry(**dict(row)) for row in rows]
 
