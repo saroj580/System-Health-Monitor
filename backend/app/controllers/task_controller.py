@@ -1,7 +1,7 @@
 """
 controllers/task_controller.py
 Automation task implementations.
-Each public function matches a task id defined in config.AVAILABLE_TASKS.
+Each task executes an automated system workflow and returns rich diagnostic details.
 """
 
 import os
@@ -13,7 +13,7 @@ import zipfile
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Any
 
 import psutil
 
@@ -23,7 +23,14 @@ logger = logging.getLogger(__name__)
 
 #  Internal helper 
 
-def _make_result(task_id: str, label: str, start: float, success: bool, message: str) -> TaskResult:
+def _make_result(
+    task_id: str,
+    label: str,
+    start: float,
+    success: bool,
+    message: str,
+    details: dict[str, Any] | None = None,
+) -> TaskResult:
     duration_ms = int((time.monotonic() - start) * 1000)
     return TaskResult(
         task_id=task_id,
@@ -31,13 +38,14 @@ def _make_result(task_id: str, label: str, start: float, success: bool, message:
         status="success" if success else "error",
         message=message,
         duration_ms=duration_ms,
+        details=details or {},
     )
 
 
-# Clean Temp Files
+#  Clean Temp Files 
 
 def run_clean_temp() -> TaskResult:
-    """Delete files from the user's %TEMP% directory."""
+    """Delete stale files from the user's %TEMP% directory and track space reclaimed."""
     task_id = "clean_temp"
     label = "Clean Temp Files"
     start = time.monotonic()
@@ -45,26 +53,49 @@ def run_clean_temp() -> TaskResult:
     temp_dir = Path(os.environ.get("TEMP", "/tmp"))
     deleted_count = 0
     skipped_count = 0
+    bytes_freed = 0
+    scanned_count = 0
 
     if not temp_dir.exists():
-        return _make_result(task_id, label, start, False, "TEMP directory not found.")
+        return _make_result(
+            task_id, label, start, False, "TEMP directory not found.",
+            {"target_path": str(temp_dir), "error": "Directory does not exist"}
+        )
 
     for item in temp_dir.iterdir():
+        scanned_count += 1
         try:
             if item.is_file() or item.is_symlink():
+                sz = item.stat().st_size
                 item.unlink()
                 deleted_count += 1
+                bytes_freed += sz
             elif item.is_dir():
                 shutil.rmtree(item)
                 deleted_count += 1
         except (PermissionError, OSError):
             skipped_count += 1
 
-    msg = f"Deleted {deleted_count} item(s). Skipped {skipped_count} (in use/locked)."
-    return _make_result(task_id, label, start, True, msg)
+    reclaimed_mb = round(bytes_freed / (1024 * 1024), 2)
+    msg = f"Deleted {deleted_count} item(s) ({reclaimed_mb} MB reclaimed). Skipped {skipped_count} (in use/locked)."
+    details = {
+        "target_path": str(temp_dir),
+        "scanned_items": scanned_count,
+        "deleted_items": deleted_count,
+        "skipped_items": skipped_count,
+        "bytes_reclaimed": bytes_freed,
+        "reclaimed_mb": reclaimed_mb,
+        "actions": [
+            f"Scanned temporary directory: {temp_dir}",
+            f"Removed {deleted_count} temporary files and directories",
+            f"Skipped {skipped_count} files actively locked by Windows background processes",
+            f"Reclaimed {reclaimed_mb} MB of storage space",
+        ],
+    }
+    return _make_result(task_id, label, start, True, msg, details)
 
 
-#  Backup Documents
+#  Backup Documents 
 
 def run_backup_documents() -> TaskResult:
     """Zip the user's Documents folder to the Desktop."""
@@ -76,7 +107,10 @@ def run_backup_documents() -> TaskResult:
     desktop_dir = Path.home() / "Desktop"
 
     if not docs_dir.exists():
-        return _make_result(task_id, label, start, False, "Documents folder not found.")
+        return _make_result(
+            task_id, label, start, False, "Documents folder not found.",
+            {"source_path": str(docs_dir), "error": "Folder not found"}
+        )
 
     desktop_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -92,14 +126,29 @@ def run_backup_documents() -> TaskResult:
                         file_count += 1
                     except (PermissionError, OSError):
                         pass
-        size_mb = zip_path.stat().st_size / 1024 / 1024
-        msg = f"Backed up {file_count} file(s) → {zip_path.name} ({size_mb:.1f} MB)"
-        return _make_result(task_id, label, start, True, msg)
+        size_mb = round(zip_path.stat().st_size / 1024 / 1024, 2)
+        msg = f"Backed up {file_count} file(s) → {zip_path.name} ({size_mb} MB)"
+        details = {
+            "source_path": str(docs_dir),
+            "destination_path": str(zip_path),
+            "files_archived": file_count,
+            "archive_size_mb": size_mb,
+            "compression_algorithm": "ZIP_DEFLATED",
+            "actions": [
+                f"Scanned source directory: {docs_dir}",
+                f"Compressed {file_count} documents into a ZIP archive",
+                f"Wrote backup file to Desktop: {zip_path.name} ({size_mb} MB)",
+            ],
+        }
+        return _make_result(task_id, label, start, True, msg, details)
     except Exception as exc:
-        return _make_result(task_id, label, start, False, f"Failed: {exc}")
+        return _make_result(
+            task_id, label, start, False, f"Failed: {exc}",
+            {"error": str(exc), "destination_path": str(zip_path)}
+        )
 
 
-#  Flush DNS Cache
+#  Flush DNS Cache 
 
 def run_flush_dns() -> TaskResult:
     """Run the platform-appropriate DNS flush command."""
@@ -108,37 +157,47 @@ def run_flush_dns() -> TaskResult:
     start = time.monotonic()
 
     system = platform.system()
+    cmd = ["ipconfig", "/flushdns"] if system == "Windows" else ["dscacheutil", "-flushcache"]
     try:
         if system == "Windows":
             result = subprocess.run(
-                ["ipconfig", "/flushdns"],
+                cmd,
                 capture_output=True, text=True, timeout=10, check=True
             )
-            output = result.stdout.strip() or "DNS cache flushed."
+            output = result.stdout.strip() or "Successfully flushed the DNS Resolver Cache."
         elif system == "Darwin":
-            subprocess.run(
-                ["dscacheutil", "-flushcache"],
-                capture_output=True, timeout=10, check=True
-            )
-            subprocess.run(
-                ["killall", "-HUP", "mDNSResponder"],
-                capture_output=True, timeout=10, check=True
-            )
+            subprocess.run(cmd, capture_output=True, timeout=10, check=True)
+            subprocess.run(["killall", "-HUP", "mDNSResponder"], capture_output=True, timeout=10, check=True)
             output = "DNS cache flushed (macOS)."
         else:
-            subprocess.run(
-                ["systemd-resolve", "--flush-caches"],
-                capture_output=True, timeout=10, check=True
-            )
+            subprocess.run(["systemd-resolve", "--flush-caches"], capture_output=True, timeout=10, check=True)
             output = "DNS cache flushed (Linux systemd-resolved)."
-        return _make_result(task_id, label, start, True, output)
+
+        details = {
+            "command": " ".join(cmd),
+            "platform": system,
+            "stdout": output,
+            "actions": [
+                f"Executed system DNS flush command: {' '.join(cmd)}",
+                "Cleared host name resolver cache and stale IP mappings",
+                "Operating system DNS resolver ready for refreshed queries",
+            ],
+        }
+        return _make_result(task_id, label, start, True, output, details)
     except subprocess.CalledProcessError as exc:
-        return _make_result(task_id, label, start, False, f"Command failed: {exc.stderr}")
+        err = exc.stderr.strip() if exc.stderr else str(exc)
+        return _make_result(
+            task_id, label, start, False, f"Command failed: {err}",
+            {"command": " ".join(cmd), "stderr": err}
+        )
     except Exception as exc:
-        return _make_result(task_id, label, start, False, str(exc))
+        return _make_result(
+            task_id, label, start, False, str(exc),
+            {"command": " ".join(cmd), "error": str(exc)}
+        )
 
 
-# Kill High-CPU Processes 
+#  Kill High-CPU Processes 
 
 _SYSTEM_PROCESS_NAMES = {
     "system", "svchost.exe", "csrss.exe", "smss.exe", "lsass.exe",
@@ -159,8 +218,10 @@ def run_kill_high_cpu() -> TaskResult:
 
     killed: list[str] = []
     skipped: list[str] = []
+    evaluated_count = 0
 
     for proc in psutil.process_iter(["pid", "name", "cpu_percent", "username"]):
+        evaluated_count += 1
         try:
             info = proc.info
             name_lower = (info["name"] or "").lower()
@@ -176,13 +237,24 @@ def run_kill_high_cpu() -> TaskResult:
     if killed:
         msg = f"Terminated {len(killed)} process(es): " + ", ".join(killed)
     else:
-        msg = f"No processes found above {CPU_THRESHOLD}% CPU."
+        msg = f"No user processes found consuming > {CPU_THRESHOLD}% CPU."
 
-    return _make_result(task_id, label, start, True, msg)
+    details = {
+        "cpu_threshold_percent": CPU_THRESHOLD,
+        "processes_evaluated": evaluated_count,
+        "terminated_processes": killed,
+        "protected_system_skipped": len(skipped),
+        "actions": [
+            f"Scanned all active system processes with CPU threshold >= {CPU_THRESHOLD}%",
+            f"Evaluated {evaluated_count} processes in the system process table",
+            f"{len(killed)} high-load non-system processes terminated" if killed else "All processes operating within safe CPU limits",
+        ],
+    }
+
+    return _make_result(task_id, label, start, True, msg, details)
 
 
 #  Dispatch map 
-# Maps task id → callable. Add new tasks here.
 
 TASK_REGISTRY: dict[str, Callable[[], TaskResult]] = {
     "clean_temp": run_clean_temp,

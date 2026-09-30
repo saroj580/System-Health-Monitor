@@ -85,6 +85,41 @@ def _get_cpu_temp() -> Optional[float]:
     return None
 
 
+def calculate_system_health(cpu_pct: float, ram_pct: float, disk_pct: float) -> tuple[float, str, str]:
+    """
+    Calculate an overall system health score from 0.0 to 100.0%.
+    Inverse weighted composite penalty based on CPU (40%), RAM (35%), and Disk (25%).
+    """
+    stress = (0.40 * cpu_pct) + (0.35 * ram_pct) + (0.25 * disk_pct)
+    health = max(0.0, min(100.0, 100.0 - stress))
+    health_rounded = round(health, 1)
+
+    if health_rounded >= 85.0:
+        status = "Optimal"
+        insight = "All subsystems operating at peak efficiency."
+    elif health_rounded >= 70.0:
+        status = "Good"
+        insight = "System running smoothly within normal operating parameters."
+    elif health_rounded >= 50.0:
+        status = "Moderate"
+        if ram_pct > 75.0:
+            insight = "High memory load detected. Consider closing idle apps."
+        elif cpu_pct > 70.0:
+            insight = "Elevated CPU usage detected. Background tasks active."
+        else:
+            insight = "Moderate system load. Run cleanup tasks to optimize performance."
+    else:
+        status = "Critical"
+        if disk_pct > 90.0:
+            insight = "Critical disk capacity warning. Low storage space."
+        elif ram_pct > 90.0:
+            insight = "Severe RAM exhaustion. Virtual memory paging active."
+        else:
+            insight = "High system stress. Run automation cleanups immediately."
+
+    return health_rounded, status, insight
+
+
 def get_system_stats() -> SystemStats:
     """
     Collect a full hardware snapshot and return a validated SystemStats object.
@@ -105,12 +140,18 @@ def get_system_stats() -> SystemStats:
 
     # Disk (pick primary disk percent for DB snapshot convenience)
     disks = _get_disk_info()
+    primary_disk_pct = disks[0].percent if disks else 0.0
 
     # Network
     network = _get_network_info()
 
     # Uptime
     uptime_seconds = int(time.time() - psutil.boot_time())
+
+    # Overall Health Score (0-100%)
+    health_pct, health_status, health_insight = calculate_system_health(
+        cpu_percent, vm.percent, primary_disk_pct
+    )
 
     return SystemStats(
         cpu_percent=cpu_percent,
@@ -123,5 +164,8 @@ def get_system_stats() -> SystemStats:
         disks=disks,
         network=network,
         uptime_seconds=uptime_seconds,
+        health_percent=health_pct,
+        health_status=health_status,
+        health_insight=health_insight,
         timestamp=datetime.datetime.utcnow().isoformat() + "Z",
     )
