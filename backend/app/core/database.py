@@ -35,6 +35,7 @@ def init_db() -> None:
                 message     TEXT,
                 duration_ms INTEGER,
                 user_email  TEXT    NOT NULL DEFAULT '',
+                details     TEXT    DEFAULT '',
                 created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
             );
 
@@ -64,11 +65,14 @@ def init_db() -> None:
             """
         )
 
-        # Migration: ensure user_email column exists on task_log if table was already created
+        # Migration: ensure user_email and details columns exist on task_log if table was already created
         task_cols = [row[1] for row in conn.execute("PRAGMA table_info(task_log)").fetchall()]
         if "user_email" not in task_cols:
             conn.execute("ALTER TABLE task_log ADD COLUMN user_email TEXT NOT NULL DEFAULT ''")
             logger.info("Migrated task_log table: added user_email column.")
+        if "details" not in task_cols:
+            conn.execute("ALTER TABLE task_log ADD COLUMN details TEXT DEFAULT ''")
+            logger.info("Migrated task_log table: added details column.")
 
         # Migration: ensure is_trial & trial_used columns exist on license table
         lic_cols = [row[1] for row in conn.execute("PRAGMA table_info(license)").fetchall()]
