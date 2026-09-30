@@ -7,6 +7,7 @@ import type { UseTaskRunnerResult } from '../controllers/useTaskRunner';
 import { StatGauge } from './components/StatGauge';
 import { TaskCard } from './components/TaskCard';
 import { ActivityLogTable } from './components/ActivityLogTable';
+import { OverallHealthCard } from './components/OverallHealthCard';
 import { formatUptime } from '../models/systemStats';
 
 import type { LicenseStatus } from '../models/licenseStatus';
@@ -103,8 +104,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ statsData, taskDat
         </div>
       </header>
 
+      {/* ── Overall System Health Score ── */}
+      {stats && (
+        <OverallHealthCard
+          healthPercent={stats.health_percent}
+          healthStatus={stats.health_status}
+          healthInsight={stats.health_insight}
+          cpuPercent={stats.cpu_percent}
+          ramPercent={stats.ram_percent}
+          diskPercent={primaryDisk?.percent ?? 0}
+        />
+      )}
+
       {/*  Stat Gauges  */}
-      <Section title="System Health" id="system-health">
+      <Section title="System Health Breakdown" id="system-health">
         <div className="grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-2">
           {!stats ? (
             [0, 1, 2, 3].map(i => <GaugeSkeleton key={i} />)
