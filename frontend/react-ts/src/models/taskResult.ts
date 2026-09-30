@@ -14,6 +14,7 @@ export interface TaskResult {
   status: 'success' | 'error';
   message: string;
   duration_ms: number;
+  details?: Record<string, any> | null;
 }
 
 export interface TaskLogEntry {
@@ -24,6 +25,7 @@ export interface TaskLogEntry {
   message: string | null;
   duration_ms: number | null;
   user_email?: string | null;
+  details?: Record<string, any> | null;
   created_at: string; // ISO-8601 UTC
 }
 
