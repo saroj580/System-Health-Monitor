@@ -51,6 +51,9 @@ class SystemStats(BaseModel):
     network: NetworkInfo
 
     uptime_seconds: int
+    health_percent: float = Field(..., ge=0, le=100, description="Overall health score (0-100%)")
+    health_status: str = Field("Optimal", description="Optimal, Good, Moderate, or Critical")
+    health_insight: str = Field("All systems operational", description="Contextual recommendation")
     timestamp: str = Field(..., description="ISO-8601 UTC timestamp")
 
 
@@ -76,6 +79,7 @@ class TaskResult(BaseModel):
     status: str = Field(..., pattern="^(success|error)$")
     message: str
     duration_ms: int
+    details: Optional[dict[str, Any]] = None
 
 
 # Audit Log
@@ -89,6 +93,7 @@ class TaskLogEntry(BaseModel):
     message: Optional[str]
     duration_ms: Optional[int]
     user_email: Optional[str] = None
+    details: Optional[dict[str, Any]] = None
     created_at: str
 
 
