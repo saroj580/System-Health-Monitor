@@ -37,6 +37,9 @@ export interface SystemStats {
   network: NetworkInfo;
 
   uptime_seconds: number;
+  health_percent?: number;
+  health_status?: string;
+  health_insight?: string;
   timestamp: string; // ISO-8601 UTC
 }
 
