@@ -1,0 +1,131 @@
+# System Monitor & Task Automator — .gitignore
+# Stack: Python / FastAPI · React / TypeScript / Vite · Electron · NSIS
+
+
+
+# Python 
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+
+# Virtual environments
+backend/venv/
+backend/.venv/
+.env
+.env.*
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+*.spec
+
+# Private RSA license key & generator tool (NEVER commit to repository)
+backend/generate_license.py
+backend/private_key.pem
+*.pem
+
+# PyInstaller output
+backend/dist/
+backend/build/
+
+# SQLite database (runtime artifact)
+*.db
+*.db-shm
+*.db-wal
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+#  Node / JavaScript / TypeScript 
+node_modules/
+frontend/react-ts/node_modules/
+
+# Build output
+frontend/react-ts/dist/
+frontend/react-ts/dist-electron/
+
+# Vite cache
+frontend/react-ts/.vite/
+
+# TypeScript incremental compilation
+*.tsbuildinfo
+
+# npm / yarn / pnpm lockfiles (keep package-lock.json, ignore others)
+yarn.lock
+pnpm-lock.yaml
+
+#  Electron 
+out/
+frontend/react-ts/out/
+*.asar
+
+# electron-builder artifacts
+frontend/react-ts/release/
+
+#  NSIS / Installer 
+dist-installer/
+*.exe
+*.nsi~
+
+#  OS generated files 
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+
+#  Editors / IDEs 
+# VS Code (keep .vscode/extensions.json if desired)
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/*.code-workspace
+
+# JetBrains
+.idea/
+*.iml
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+\#*\#
+.#*
+
+#  Logs 
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+#  Misc runtime artifacts 
+*.bak
+*.tmp
+*.temp
