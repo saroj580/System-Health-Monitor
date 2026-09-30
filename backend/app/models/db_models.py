@@ -4,6 +4,7 @@ Raw SQL query helpers for the two database tables.
 Keeps all SQL in one place; called by the routes layer.
 """
 
+import json
 import sqlite3
 from typing import Any
 
@@ -14,10 +15,11 @@ from app.models.schemas import TaskResult, TaskLogEntry
 
 def insert_task_log(conn: sqlite3.Connection, result: TaskResult, user_email: str = "") -> int:
     """Insert a task execution record tied to the active licensed user. Returns the new row id."""
+    details_json = json.dumps(result.details or {})
     cur = conn.execute(
         """
-        INSERT INTO task_log (task_id, task_label, status, message, duration_ms, user_email)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO task_log (task_id, task_label, status, message, duration_ms, user_email, details)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             result.task_id,
@@ -26,6 +28,7 @@ def insert_task_log(conn: sqlite3.Connection, result: TaskResult, user_email: st
             result.message,
             result.duration_ms,
             user_email,
+            details_json,
         ),
     )
     return cur.lastrowid  # type: ignore[return-value]
@@ -43,7 +46,7 @@ def fetch_task_logs(
     if user_email:
         rows = conn.execute(
             """
-            SELECT id, task_id, task_label, status, message, duration_ms, user_email, created_at
+            SELECT id, task_id, task_label, status, message, duration_ms, user_email, details, created_at
             FROM task_log
             WHERE user_email = ?
             ORDER BY id DESC
@@ -54,7 +57,7 @@ def fetch_task_logs(
     else:
         rows = conn.execute(
             """
-            SELECT id, task_id, task_label, status, message, duration_ms, user_email, created_at
+            SELECT id, task_id, task_label, status, message, duration_ms, user_email, details, created_at
             FROM task_log
             ORDER BY id DESC
             LIMIT ?
@@ -62,7 +65,20 @@ def fetch_task_logs(
             (limit,),
         ).fetchall()
 
-    return [TaskLogEntry(**dict(row)) for row in rows]
+    entries: list[TaskLogEntry] = []
+    for row in rows:
+        d = dict(row)
+        raw_details = d.get("details")
+        if raw_details and isinstance(raw_details, str):
+            try:
+                d["details"] = json.loads(raw_details)
+            except Exception:
+                d["details"] = {}
+        else:
+            d["details"] = {}
+        entries.append(TaskLogEntry(**d))
+
+    return entries
 
 
 #  system_snapshot table 
