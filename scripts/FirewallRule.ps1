@@ -3,7 +3,7 @@
     Configures Windows Defender Firewall rules for System Monitor and Task Automator.
 
 .DESCRIPTION
-    Adds, removes, or verifies Windows Defender Firewall rules for port 8000 / backend executable.
+    Adds, removes, or verifies Windows Defender Firewall rules for port 8003 / backend executable.
     Requires Administrator privileges. If run without elevation in interactive mode, prompts for UAC elevation.
 
 .PARAMETER Action
@@ -13,7 +13,7 @@
     The display name for the firewall rule. Default: "System Monitor & Task Automator Backend"
 
 .PARAMETER Port
-    The local port number to allow (default: 8000).
+    The local port number to allow (default: 8003).
 
 .PARAMETER Protocol
     Protocol to allow: "TCP" or "UDP" (default: "TCP").
@@ -25,7 +25,7 @@
     Direction of traffic: "Inbound", "Outbound", or "Both" (default: "Inbound").
 
 .EXAMPLE
-    .\FirewallRule.ps1 -Action Add -Port 8000
+    .\FirewallRule.ps1 -Action Add -Port 8003
     .\FirewallRule.ps1 -Action Remove
     .\FirewallRule.ps1 -Action Verify
 #>
@@ -36,7 +36,7 @@ param (
     [string]$Action = "Add",
 
     [string]$RuleName = "System Monitor & Task Automator Backend",
-    [int]$Port = 8000,
+    [int]$Port = 8003,
     [ValidateSet("TCP", "UDP")]
     [string]$Protocol = "TCP",
     [string]$ProgramPath = "",
