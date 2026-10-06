@@ -4,9 +4,9 @@
 
 .DESCRIPTION
     Performs full teardown of the application:
-    1. Kills active application and background processes (System Monitor.exe, backend.exe, port 8000 listeners).
+    1. Kills active application and background processes (System Monitor.exe, backend.exe, port 8003 listeners).
     2. Stops and unregisters any background Windows Services or Scheduled Tasks.
-    3. Removes Windows Firewall rules for port 8000.
+    3. Removes Windows Firewall rules for port 8003.
     4. Purges Start Menu, Desktop, and Startup shortcuts.
     5. Cleans Windows Registry entries (Add/Remove Programs, application state).
     6. Removes the installed program files and directory.
@@ -104,13 +104,13 @@ foreach ($procName in $processNames) {
     }
 }
 
-# Check for lingering processes listening on port 8000
+# Check for lingering processes listening on port 8003
 try {
-    $portListeners = Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
+    $portListeners = Get-NetTCPConnection -LocalPort 8003 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
     if ($portListeners) {
         foreach ($pidToKill in $portListeners) {
             if ($pidToKill -gt 0) {
-                Write-Host " Freeing port 8000 (Killing PID: $pidToKill)..." -ForegroundColor Yellow
+                Write-Host " Freeing port 8003 (Killing PID: $pidToKill)..." -ForegroundColor Yellow
                 Stop-Process -Id $pidToKill -Force -ErrorAction SilentlyContinue
             }
         }
@@ -149,7 +149,7 @@ $scriptsDir = $PSScriptRoot
 $firewallScript = Join-Path $scriptsDir "FirewallRule.ps1"
 if (Test-Path $firewallScript) {
     try {
-        & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $firewallScript -Action Remove -Port 8000
+        & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $firewallScript -Action Remove -Port 8003
     } catch {
         Write-Warning "Could not run FirewallRule.ps1 directly: $_"
     }
