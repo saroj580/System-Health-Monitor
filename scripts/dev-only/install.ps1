@@ -1,3 +1,7 @@
+
+# DEPRECATED: use setup.nsi installer instead. But since setup.nsi already ships FirewallRule.ps1 inside the installed app, there is no reason for an end-user to ever run install.ps1 directly.
+
+
 <#
 .SYNOPSIS
     Master Installation Orchestrator for System Monitor and Task Automator.
@@ -7,7 +11,7 @@
     1. Verifies prerequisites (Windows version, architecture, privileges).
     2. Terminates existing instances to allow clean file replacement.
     3. Deploys app files to the installation directory.
-    4. Configures Windows Defender Firewall rules for port 8000.
+    4. Configures Windows Defender Firewall rules for port 8003.
     5. Creates Desktop, Start Menu, and Uninstallation shortcuts.
     6. Registers the application in Windows 'Installed Apps' (Add/Remove Programs).
     7. Optionally launches the application.
@@ -137,7 +141,7 @@ Write-Host "`n[3/6] Configuring Windows Firewall..." -ForegroundColor Cyan
 $firewallScript = Join-Path $destScriptsDir "FirewallRule.ps1"
 if (Test-Path $firewallScript) {
     try {
-        & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $firewallScript -Action Add -Port 8000
+        & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $firewallScript -Action Add -Port 8003
     }
     catch {
         Write-Warning "Firewall rule configuration notice: $_"
