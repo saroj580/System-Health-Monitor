@@ -6,12 +6,12 @@
     Validates machine readiness before installation or execution:
     - PowerShell 5.1+ compatibility
     - 64-bit OS architecture
-    - Minimum available disk space (250 MB)
-    - Port 8000 availability
+    - Minimum available disk space (400 MB)
+    - Port 8003 availability
     - Administrative rights status
 
 .PARAMETER Port
-    Port number to inspect (default: 8000).
+    Port number to inspect (default: 8003).
 
 .PARAMETER AsJson
     Output results as a JSON object for programmatic integration.
@@ -23,7 +23,7 @@
 
 [CmdletBinding()]
 param (
-    [int]$Port = 8000,
+    [int]$Port = 8003,
     [switch]$AsJson
 )
 
@@ -51,7 +51,7 @@ if (-not $results.Is64Bit) {
     $results.Issues += "System Monitor requires a 64-bit Windows operating system."
 }
 
-# # 3. Minimum Windows Version check (Windows 10 / Build 10240+)
+# 3. Minimum Windows Version check (Windows 10 / Build 10240+)
 # $osVer = [Environment]::OSVersion.Version
 # if ($osVer.Major -lt 10) {
 #     $results.Pass = $false
@@ -63,9 +63,9 @@ $systemDrive = Get-PSDrive -Name ($env:SystemDrive.TrimEnd(':')) -ErrorAction Si
 if ($systemDrive) {
     $freeMb = [math]::Round($systemDrive.Free / 1MB)
     $results.FreeDiskSpaceMB = $freeMb
-    if ($freeMb -lt 250) {
+    if ($freeMb -lt 400) {
         $results.Pass = $false
-        $results.Issues += "Insufficient disk space: ${freeMb}MB free (minimum 250MB required)."
+        $results.Issues += "Insufficient disk space: ${freeMb}MB free (minimum 400MB required)."
     }
 }
 
