@@ -62,7 +62,7 @@ Section "Main Section" SecMain
     WriteUninstaller "$INSTDIR\uninstall.exe"
 
     DetailPrint "Configuring Windows Defender Firewall..."
-    nsExec::ExecToLog 'powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File "$INSTDIR\scripts\FirewallRule.ps1" -Action Add -Port 8000'
+    nsExec::ExecToLog 'powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File "$INSTDIR\scripts\FirewallRule.ps1" -Action Add -Port 8003'
 SectionEnd
 
 Section "Shortcuts" SecShortcuts
@@ -93,7 +93,7 @@ Section "Uninstall" SecUninst
 
     DetailPrint "Removing Firewall rules..."
     ${If} ${FileExists} "$INSTDIR\scripts\FirewallRule.ps1"
-        nsExec::ExecToLog 'powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File "$INSTDIR\scripts\FirewallRule.ps1" -Action Remove -Port 8000'
+        nsExec::ExecToLog 'powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File "$INSTDIR\scripts\FirewallRule.ps1" -Action Remove -Port 8003'
     ${EndIf}
 
     ; Delete shortcuts
