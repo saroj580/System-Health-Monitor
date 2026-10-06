@@ -3,7 +3,7 @@
 
 import type { LicenseStatus } from '../models/licenseStatus';
 
-const BASE = 'http://127.0.0.1:8000';
+const BASE = 'http://127.0.0.1:8003';
 
 
 export async function getLicenseStatus(): Promise<LicenseStatus> {
