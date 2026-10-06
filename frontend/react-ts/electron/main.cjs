@@ -10,12 +10,12 @@ const { spawn } = require('child_process');
 let mainWindow = null;
 let backendProcess = null;
 
-const BACKEND_PORT = 8000;
+const BACKEND_PORT = 8003;
 const BACKEND_HOST = '127.0.0.1';
 const HEALTH_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}/api/info`;
 const IS_DEV = !app.isPackaged && process.env.NODE_ENV !== 'production';
 
-// Ensure single instance to avoid port 8000 collisions
+// Ensure single instance to avoid port 8003 collisions
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
