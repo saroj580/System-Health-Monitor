@@ -75,3 +75,36 @@ system-monitor-automator/
 ├── build.ps1                              # Automated compilation orchestrator (Planned)
 ├── setup.nsi                              # NSIS installer definition (Planned)
 └── PROJECT.md                             # Specification & Architecture Document
+
+# Offline License Verification Architecture
+
+This document outlines the workflow for implementing a secure, completely offline licensing system using Asymmetric JSON Web Tokens (JWT) and RSA cryptography.
+
+## 1. Cryptographic Architecture
+
+The system relies on a mathematical proof rather than a remote server check.
+* **Private Key:** Kept strictly confidential by the developer. Used exclusively to generate and cryptographically sign license tokens.
+* **Public Key:** Embedded directly into the Python FastAPI source code. It can only verify signatures made by the Private Key; it cannot be used to forge new licenses.
+
+## 2. Token Generation (Developer Side)
+
+Before software distribution, the developer provisions access for a new user.
+* A standalone Python script takes the customer's details (e.g., name, expiration date, or an optional hardware ID to lock the software to a specific machine).
+* The script signs this JSON payload using the RSA Private Key.
+* The output is a secure JWT string (the "License Key") which is delivered to the customer.
+
+## 3. Frontend Gatekeeper (React)
+
+The user interface enforces the visual lock and handles user input.
+* **Startup Check:** Upon launch, React calls `GET /api/license/status`.
+* **Locked UI:** If the backend reports an unlicensed state, React forces a full-screen "Activation" view, entirely blocking access to the dashboard and hardware metrics.
+* **Submission:** The user pastes their JWT string into the input field, which React forwards to `POST /api/license/activate`.
+
+## 4. Backend Validation & Persistence (FastAPI)
+
+The Python daemon acts as the ultimate security enforcer, protecting the core application logic.
+* **Verification:** The `/activate` endpoint uses the embedded Public Key to verify the JWT signature. If a user attempts to alter the expiration date inside the token, the mathematical signature breaks, and FastAPI rejects the key.
+* **Database Storage:** A validated token is saved into a dedicated `license` table within the local SQLite database (`automator_history.db`).
+* **Middleware Protection:** A FastAPI dependency is injected into all operational routes (`/api/stats`, `/api/tasks/*`). Before any hardware read or task execution occurs, this middleware queries SQLite to ensure a valid, unexpired license exists.
+
+> **Security Note:** Implementing this lock inside the FastAPI application rather than the NSIS installer ensures that even if a malicious user extracts the raw `.exe` files using an archive tool, the backend will refuse to execute automation tasks without cryptographic proof of purchase.
