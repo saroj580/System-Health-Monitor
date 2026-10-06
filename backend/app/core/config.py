@@ -24,7 +24,7 @@ BASE_DIR: Path = _get_base_dir()
 
 #  Serve 
 HOST: str = "127.0.0.1"
-PORT: int = 8000
+PORT: int = 8003
 
 # Application metadata 
 APP_NAME: str = "System Monitor & Task Automator"
