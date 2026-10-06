@@ -4,7 +4,7 @@
 import type { AppInfo, SystemStats } from '../models/systemStats';
 import type { TaskDefinition, TaskResult, TaskLogEntry } from '../models/taskResult';
 
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = 'http://127.0.0.1:8003';
 
 // Generic fetch wrapper with typed response
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
