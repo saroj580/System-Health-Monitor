@@ -3,7 +3,7 @@
 
 import type { SystemStats } from '../models/systemStats';
 
-const WS_URL = 'ws://127.0.0.1:8000/ws/stats';
+const WS_URL = 'ws://127.0.0.1:8003/ws/stats';
 const MAX_BACKOFF_MS = 30_000;
 
 type StatsCallback = (stats: SystemStats) => void;
