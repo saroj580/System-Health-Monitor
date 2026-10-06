@@ -145,25 +145,32 @@ export const LogDetailModal: React.FC<LogDetailModalProps> = ({ log, onClose }) 
           )}
 
           {/* Technical Diagnostics */}
-          <div>
-            <h4 className="text-[0.72rem] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-              Diagnostic Parameters
-            </h4>
-            <div className="rounded-lg bg-black/50 border border-white/[.08] p-3 text-[0.72rem] font-mono text-slate-300 overflow-x-auto">
-              <dl className="grid grid-cols-3 gap-2">
-                {Object.entries(details)
-                  .filter(([key]) => key !== 'actions')
-                  .map(([key, value]) => (
-                    <React.Fragment key={key}>
-                      <dt className="text-slate-500 font-semibold">{key}:</dt>
-                      <dd className="col-span-2 text-slate-200 break-all">
-                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                      </dd>
-                    </React.Fragment>
-                  ))}
-              </dl>
-            </div>
-          </div>
+          {(() => {
+            const diagEntries = Object.entries(details).filter(([key]) => key !== 'actions');
+            return (
+              <div>
+                <h4 className="text-[0.72rem] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Diagnostic Parameters
+                </h4>
+                <div className="rounded-lg bg-black/50 border border-white/[.08] p-3 text-[0.72rem] font-mono overflow-x-auto">
+                  {diagEntries.length === 0 ? (
+                    <p className="text-slate-500 italic text-[0.72rem]">No diagnostic parameters recorded.</p>
+                  ) : (
+                    <dl className="flex flex-col gap-2">
+                      {diagEntries.map(([key, value]) => (
+                        <div key={key} className="flex gap-3 items-start">
+                          <dt className="text-slate-400 font-semibold shrink-0 min-w-[8rem]">{key}:</dt>
+                          <dd className="text-slate-100 break-all">
+                            {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Footer */}
