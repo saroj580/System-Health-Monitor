@@ -4,7 +4,7 @@ Pydantic v2 schemas — the data contracts between backend layers and the API su
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Any, Optional
 
 
 # System Stats 
